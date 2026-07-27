@@ -31,7 +31,8 @@ coverage displays `TOKENS / REPORTED`. Numeric changes animate in place.
 
 Native nonactivating `NSPanel`; floats above standard windows, joins all
 Spaces, remains available beside full-screen apps, remembers position, and is
-reopened from a menu-bar traffic-light item.
+shown or hidden from a menu-bar item. Its colored lamp mirrors current phase;
+tooltip and accessibility label repeat the status in text.
 
 ## Accessibility
 

@@ -1,5 +1,7 @@
 import AppKit
+import Combine
 import SwiftUI
+import TokenSignalCore
 
 /*
  THESIS: One physical signal answers “is Codex working?”; no dashboard grid.
@@ -10,14 +12,18 @@ import SwiftUI
 */
 
 @MainActor
-final class TokenSignalApp: NSObject, NSApplicationDelegate {
+final class TokenSignalApp: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let store = MonitorStore()
     private var panel: NSPanel!
     private var statusItem: NSStatusItem!
+    private var statusLabelItem: NSMenuItem!
+    private var toggleItem: NSMenuItem!
+    private var snapshotSubscription: AnyCancellable?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         buildPanel()
         buildStatusItem()
+        observeStatus()
         store.start()
         showPanel()
     }
@@ -48,18 +54,54 @@ final class TokenSignalApp: NSObject, NSApplicationDelegate {
 
     private func buildStatusItem() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-        statusItem.button?.image = NSImage(
-            systemSymbolName: "trafficlight",
-            accessibilityDescription: "Token Signal"
-        )
-        statusItem.button?.target = self
-        statusItem.button?.action = #selector(togglePanel)
 
         let menu = NSMenu()
-        menu.addItem(withTitle: "Show Token Signal", action: #selector(showPanel), keyEquivalent: "s")
+        menu.delegate = self
+        statusLabelItem = NSMenuItem(title: "Status: Stopped", action: nil, keyEquivalent: "")
+        statusLabelItem.isEnabled = false
+        menu.addItem(statusLabelItem)
+        menu.addItem(.separator())
+        toggleItem = NSMenuItem(title: "Hide Token Signal", action: #selector(togglePanel), keyEquivalent: "s")
+        toggleItem.target = self
+        menu.addItem(toggleItem)
         menu.addItem(.separator())
         menu.addItem(withTitle: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         statusItem.menu = menu
+    }
+
+    private func observeStatus() {
+        snapshotSubscription = store.$snapshot
+            .map(\.phase)
+            .removeDuplicates()
+            .sink { [weak self] phase in self?.updateStatusItem(for: phase) }
+    }
+
+    private func updateStatusItem(for phase: AgentPhase) {
+        let status = phase.label
+        statusItem.button?.image = statusImage(color: phase.menuBarColor)
+        statusItem.button?.toolTip = "Token Signal — \(status)"
+        statusItem.button?.setAccessibilityLabel("Token Signal, \(status)")
+    }
+
+    private func statusImage(color: NSColor) -> NSImage {
+        let size = NSSize(width: 18, height: 18)
+        let image = NSImage(size: size, flipped: false) { rect in
+            let lamp = NSRect(x: 4, y: 4, width: 10, height: 10)
+            NSColor.black.withAlphaComponent(0.45).setStroke()
+            color.setFill()
+            let path = NSBezierPath(ovalIn: lamp)
+            path.lineWidth = 2
+            path.fill()
+            path.stroke()
+            return true
+        }
+        image.isTemplate = false
+        return image
+    }
+
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        statusLabelItem.title = "Status: \(store.snapshot.phase.label)"
+        toggleItem.title = panel.isVisible ? "Hide Token Signal" : "Show Token Signal"
     }
 
     @objc private func togglePanel() {
@@ -68,6 +110,24 @@ final class TokenSignalApp: NSObject, NSApplicationDelegate {
 
     @objc private func showPanel() {
         panel.orderFrontRegardless()
+    }
+}
+
+private extension AgentPhase {
+    var label: String {
+        switch self {
+        case .stopped: "Stopped"
+        case .preparing: "Preparing"
+        case .running: "Running"
+        }
+    }
+
+    var menuBarColor: NSColor {
+        switch self {
+        case .stopped: NSColor(red: 1.00, green: 0.25, blue: 0.29, alpha: 1)
+        case .preparing: NSColor(red: 1.00, green: 0.57, blue: 0.16, alpha: 1)
+        case .running: NSColor(red: 0.20, green: 0.86, blue: 0.46, alpha: 1)
+        }
     }
 }
 

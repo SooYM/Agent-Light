@@ -49,9 +49,10 @@ Running takes priority over preparing when several agents are active.
    open "outputs/Token Signal.app"
    ```
 
-Token Signal opens as a floating panel and adds a traffic-light icon to the
-menu bar. Closing the panel leaves the menu-bar app running. Open its menu and
-choose **Show Token Signal** or **Quit**.
+Token Signal opens as a floating panel and adds a color-coded indicator to the
+menu bar: red when stopped, orange while preparing, and green while running.
+Closing the panel leaves the menu-bar app running. Open its menu and choose
+**Show Token Signal**, **Hide Token Signal**, or **Quit**.
 
 If macOS blocks the first launch, Control-click `Token Signal.app`, choose
 **Open**, then confirm **Open**.
