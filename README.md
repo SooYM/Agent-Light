@@ -52,7 +52,12 @@ Running takes priority over preparing when several agents are active.
 Token Signal opens as a floating panel and adds a color-coded indicator to the
 menu bar: red when stopped, orange while preparing, and green while running.
 Closing the panel leaves the menu-bar app running. Open its menu and choose
-**Show Token Signal**, **Hide Token Signal**, or **Quit**.
+**Show Token Signal**, **Hide Token Signal**, or **Quit**. Enable **Light Only
+Mode** to collapse the panel to the three status lights and hide all token and
+provider details. The choice persists between launches.
+
+Large token totals shrink to fit the telemetry field, so the complete number
+remains visible instead of ending in an ellipsis.
 
 If macOS blocks the first launch, Control-click `Token Signal.app`, choose
 **Open**, then confirm **Open**.
@@ -110,6 +115,8 @@ context-window capacity.
 - No telemetry
 - Provider stores opened read-only
 - All calculation stays on the Mac
+- Light Only Mode removes the token total from both the panel and its
+  accessibility summary
 
 Local data sources currently include:
 

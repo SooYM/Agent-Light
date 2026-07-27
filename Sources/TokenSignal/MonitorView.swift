@@ -11,21 +11,23 @@ struct MonitorView: View {
             signalColumn
                 .frame(width: 104)
 
-            Rectangle()
-                .fill(Color.white.opacity(0.10))
-                .frame(width: 1)
+            if !store.lightOnly {
+                Rectangle()
+                    .fill(Color.white.opacity(0.10))
+                    .frame(width: 1)
 
-            telemetry
-                .padding(.horizontal, 22)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                telemetry
+                    .padding(.horizontal, 22)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+            }
         }
-        .frame(width: 370, height: 196)
+        .frame(width: store.lightOnly ? 104 : 370, height: 196)
         .background(Color(red: 0.055, green: 0.059, blue: 0.064))
         .overlay(alignment: .top) {
             Rectangle().fill(activeColor).frame(height: 3)
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Agent status \(statusText), \(formattedTokens) tokens")
+        .accessibilityLabel(accessibilitySummary)
     }
 
     private var signalColumn: some View {
@@ -73,6 +75,10 @@ struct MonitorView: View {
                 .font(.system(size: 42, weight: .medium, design: .monospaced))
                 .tracking(-1.4)
                 .foregroundStyle(Color.white)
+                .lineLimit(1)
+                .minimumScaleFactor(0.45)
+                .allowsTightening(true)
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .contentTransition(.numericText())
                 .animation(.easeOut(duration: 0.22), value: store.snapshot.tokens)
 
@@ -114,6 +120,12 @@ struct MonitorView: View {
 
     private var formattedTokens: String {
         store.snapshot.tokens?.formatted(.number.grouping(.automatic)) ?? "—"
+    }
+
+    private var accessibilitySummary: String {
+        store.lightOnly
+            ? "Agent status \(statusText)"
+            : "Agent status \(statusText), \(formattedTokens) tokens"
     }
 
     private var providerText: String {

@@ -18,6 +18,7 @@ final class TokenSignalApp: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var statusItem: NSStatusItem!
     private var statusLabelItem: NSMenuItem!
     private var toggleItem: NSMenuItem!
+    private var lightOnlyItem: NSMenuItem!
     private var snapshotSubscription: AnyCancellable?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -34,7 +35,7 @@ final class TokenSignalApp: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private func buildPanel() {
         panel = NSPanel(
-            contentRect: NSRect(x: 0, y: 0, width: 370, height: 196),
+            contentRect: NSRect(x: 0, y: 0, width: panelWidth, height: 196),
             styleMask: [.titled, .closable, .fullSizeContentView, .nonactivatingPanel],
             backing: .buffered,
             defer: false
@@ -50,6 +51,7 @@ final class TokenSignalApp: NSObject, NSApplicationDelegate, NSMenuDelegate {
         panel.contentView = NSHostingView(rootView: MonitorView(store: store))
         panel.center()
         panel.setFrameAutosaveName("TokenSignalPanel")
+        applyPanelMode(animated: false)
     }
 
     private func buildStatusItem() {
@@ -64,6 +66,9 @@ final class TokenSignalApp: NSObject, NSApplicationDelegate, NSMenuDelegate {
         toggleItem = NSMenuItem(title: "Hide Token Signal", action: #selector(togglePanel), keyEquivalent: "s")
         toggleItem.target = self
         menu.addItem(toggleItem)
+        lightOnlyItem = NSMenuItem(title: "Light Only Mode", action: #selector(toggleLightOnly), keyEquivalent: "l")
+        lightOnlyItem.target = self
+        menu.addItem(lightOnlyItem)
         menu.addItem(.separator())
         menu.addItem(withTitle: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         statusItem.menu = menu
@@ -102,14 +107,31 @@ final class TokenSignalApp: NSObject, NSApplicationDelegate, NSMenuDelegate {
     func menuNeedsUpdate(_ menu: NSMenu) {
         statusLabelItem.title = "Status: \(store.snapshot.phase.label)"
         toggleItem.title = panel.isVisible ? "Hide Token Signal" : "Show Token Signal"
+        lightOnlyItem.state = store.lightOnly ? .on : .off
     }
 
     @objc private func togglePanel() {
         panel.isVisible ? panel.orderOut(nil) : showPanel()
     }
 
+    @objc private func toggleLightOnly() {
+        store.lightOnly.toggle()
+        applyPanelMode(animated: true)
+    }
+
     @objc private func showPanel() {
         panel.orderFrontRegardless()
+    }
+
+    private var panelWidth: CGFloat { store.lightOnly ? 104 : 370 }
+
+    private func applyPanelMode(animated: Bool) {
+        var frame = panel.frame
+        let rightEdge = frame.maxX
+        frame.size.width = panelWidth
+        frame.origin.x = rightEdge - panelWidth
+        panel.standardWindowButton(.closeButton)?.isHidden = store.lightOnly
+        panel.setFrame(frame, display: true, animate: animated)
     }
 }
 

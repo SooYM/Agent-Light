@@ -6,10 +6,17 @@ import TokenSignalCore
 final class MonitorStore: ObservableObject {
     @Published private(set) var snapshot = MonitorSnapshot.empty
     @Published private(set) var errorMessage: String?
+    @Published var lightOnly: Bool {
+        didSet { UserDefaults.standard.set(lightOnly, forKey: "lightOnlyMode") }
+    }
 
     private var timer: Timer?
     private var isRefreshing = false
     private let reader = LocalAgentReader()
+
+    init() {
+        lightOnly = UserDefaults.standard.bool(forKey: "lightOnlyMode")
+    }
 
     func start() {
         refresh()
