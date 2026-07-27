@@ -33,6 +33,11 @@ final class TokenSignalApp: NSObject, NSApplicationDelegate, NSMenuDelegate {
         store.stop()
     }
 
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        if !flag { showPanel() }
+        return true
+    }
+
     private func buildPanel() {
         panel = NSPanel(
             contentRect: NSRect(x: 0, y: 0, width: panelWidth, height: 196),
@@ -156,5 +161,5 @@ private extension AgentPhase {
 let app = NSApplication.shared
 let delegate = TokenSignalApp()
 app.delegate = delegate
-app.setActivationPolicy(.accessory)
+app.setActivationPolicy(.regular)
 app.run()

@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="face" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#202327"/>
+      <stop offset="1" stop-color="#0E0F10"/>
+    </linearGradient>
+    <linearGradient id="housing" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#292D31"/>
+      <stop offset="1" stop-color="#151719"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="170%">
+      <feDropShadow dx="0" dy="28" stdDeviation="30" flood-color="#000000" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+
+  <rect x="72" y="72" width="880" height="880" rx="210" fill="url(#face)"/>
+  <rect x="73" y="73" width="878" height="878" rx="209" fill="none" stroke="#FFFFFF" stroke-opacity="0.1" stroke-width="2"/>
+
+  <g filter="url(#shadow)">
+    <rect x="306" y="142" width="412" height="740" rx="122" fill="url(#housing)" stroke="#FFFFFF" stroke-opacity="0.13" stroke-width="8"/>
+    <circle cx="512" cy="322" r="104" fill="#3A1519"/>
+    <circle cx="512" cy="512" r="104" fill="#3A2917"/>
+    <circle cx="512" cy="702" r="104" fill="#153924"/>
+    <circle cx="512" cy="322" r="83" fill="#FF404A"/>
+    <circle cx="512" cy="512" r="83" fill="#FF9129"/>
+    <circle cx="512" cy="702" r="83" fill="#33DB75"/>
+    <g fill="#FFFFFF" opacity="0.24">
+      <ellipse cx="479" cy="285" rx="27" ry="18"/>
+      <ellipse cx="479" cy="475" rx="27" ry="18"/>
+      <ellipse cx="479" cy="665" rx="27" ry="18"/>
+    </g>
+  </g>
+</svg>

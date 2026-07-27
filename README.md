@@ -51,6 +51,8 @@ Running takes priority over preparing when several agents are active.
 
 Token Signal opens as a floating panel and adds a color-coded indicator to the
 menu bar: red when stopped, orange while preparing, and green while running.
+Its traffic-light app icon also remains in the Dock; clicking it reopens a
+hidden panel.
 Closing the panel leaves the menu-bar app running. Open its menu and choose
 **Show Token Signal**, **Hide Token Signal**, or **Quit**. Enable **Light Only
 Mode** to collapse the panel to the three status lights and hide all token and
@@ -132,6 +134,8 @@ Sources/TokenSignal/       macOS panel, menu-bar item, provider readers
 Sources/TokenSignalCore/   provider-neutral status and token aggregation
 Tests/                     Swift Testing checks
 Resources/Info.plist       app bundle metadata
+Resources/AppIcon.svg      editable traffic-light app icon source
+Resources/TokenSignal.icns packaged macOS app icon
 scripts/build-app.sh       release packaging script
 outputs/Token Signal.zip   ready-to-run local build
 ```

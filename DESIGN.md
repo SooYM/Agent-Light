@@ -11,6 +11,8 @@ working?” Reading order is phase, tokens, agent count, then back to work.
 - Primary text: white; secondary: white at 58%; tertiary: white at 45%.
 - Stopped: `#FF404A`; preparing: `#FF9129`; running: `#33DB75`.
 - State color is reserved for phase, with inactive lamps at 10% opacity.
+- App icon uses the same graphite instrument face and vertically stacked red,
+  orange, and green lamps for recognition at Dock and Finder sizes.
 - System fonts only: 42 pt monospaced token total, 11 pt rounded status and
   metadata, 10 pt monospaced token label. Long totals scale down on one line;
   they are never truncated.
@@ -36,7 +38,8 @@ Native nonactivating `NSPanel`; floats above standard windows, joins all
 Spaces, remains available beside full-screen apps, remembers position, and is
 shown or hidden from a menu-bar item. Its colored lamp mirrors current phase;
 tooltip and accessibility label repeat the status in text. Light Only Mode is
-available from the same menu and persists between launches.
+available from the same menu and persists between launches. The app remains
+visible in the Dock, where selecting its icon reopens a hidden panel.
 
 ## Accessibility
 

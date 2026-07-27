@@ -10,6 +10,7 @@ swift build -c release
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$ROOT/.build/release/TokenSignal" "$APP/Contents/MacOS/TokenSignal"
 cp "$ROOT/Resources/Info.plist" "$APP/Contents/Info.plist"
+cp "$ROOT/Resources/TokenSignal.icns" "$APP/Contents/Resources/TokenSignal.icns"
 chmod +x "$APP/Contents/MacOS/TokenSignal"
 codesign --force --deep --sign - "$APP"
 
