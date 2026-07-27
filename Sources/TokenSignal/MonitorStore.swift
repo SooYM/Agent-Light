@@ -79,7 +79,7 @@ private actor LocalAgentReader {
           GROUP BY thread_id, turn_id
         ), ranked_turns AS (
           SELECT *, row_number() OVER (
-            PARTITION BY thread_id ORDER BY turn_id DESC
+            PARTITION BY thread_id ORDER BY last_activity DESC
           ) AS rank
           FROM turn_events
         ), usage_events AS (
@@ -112,11 +112,11 @@ private actor LocalAgentReader {
                t.thread_id,
                CASE
                  WHEN x.stopped_at >= t.started_at THEN 'stopped'
-                 WHEN strftime('%s','now') - t.last_activity > 1800 THEN 'stopped'
+                 WHEN strftime('%s','now') - t.last_activity > 30 THEN 'stopped'
                  WHEN u.feedback_log_body IS NULL
                       AND strftime('%s','now') - t.started_at <= 2 THEN 'preparing'
-                 WHEN u.feedback_log_body IS NULL THEN 'running'
-                 WHEN u.feedback_log_body LIKE '%needs_follow_up=true' THEN 'running'
+                 WHEN u.feedback_log_body LIKE '%needs_follow_up=true'
+                      AND strftime('%s','now') - t.last_activity <= 30 THEN 'running'
                  ELSE 'stopped'
                END,
                coalesce(s.tokens_used, 0),
