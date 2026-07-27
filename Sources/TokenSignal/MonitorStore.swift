@@ -173,9 +173,7 @@ private actor LocalAgentReader {
                  ELSE 'stopped'
                END,
                coalesce(s.tokens_used, 0),
-               substr(replace(replace(replace(
-                 coalesce(nullif(s.agent_nickname, ''), nullif(s.title, ''), 'Codex Agent'),
-                 char(9), ' '), char(10), ' '), char(13), ' '), 1, 80),
+               'Codex',
                t.last_activity
         FROM ranked_turns t
         LEFT JOIN usage_events u
