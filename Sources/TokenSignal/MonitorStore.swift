@@ -214,40 +214,96 @@ private actor LocalAgentReader {
 
     private func readAntigravity() -> AgentRecord? {
         let home = FileManager.default.homeDirectoryForCurrentUser
-        let candidates = ["Antigravity", "Antigravity IDE"].map {
+        var candidates: [(url: URL, modified: Date)] = []
+
+        let liveDir = home.appending(path: ".gemini/antigravity/conversations", directoryHint: .isDirectory)
+        if let entries = try? FileManager.default.contentsOfDirectory(at: liveDir, includingPropertiesForKeys: [.contentModificationDateKey]) {
+            for url in entries where url.pathExtension == "db" {
+                if let dbMtime = modificationDate(url) {
+                    let walUrl = url.deletingPathExtension().appendingPathExtension("db-wal")
+                    let walMtime = modificationDate(walUrl) ?? .distantPast
+                    let newestMtime = max(dbMtime, walMtime)
+                    candidates.append((url, newestMtime))
+                }
+            }
+        }
+
+        let legacyPaths = ["Antigravity", "Antigravity IDE"].map {
             home.appending(path: "Library/Application Support/\($0)/User/globalStorage/state.vscdb")
         }
-        guard let database = candidates
-            .compactMap({ url -> (URL, Date)? in
-                guard let modified = modificationDate(url) else { return nil }
-                return (url, modified)
-            })
-            .max(by: { $0.1 < $1.1 }) else { return nil }
+        for url in legacyPaths {
+            if let mtime = modificationDate(url) {
+                candidates.append((url, mtime))
+            }
+        }
+
+        guard let database = candidates.max(by: { $0.1 < $1.1 }) else { return nil }
 
         let processRunning = commandSucceeds("/usr/bin/pgrep", ["-f", "Antigravity( IDE)?\\.app"])
-        let value = run("/usr/bin/sqlite3", [
-            "-noheader", database.0.path,
-            "select value from ItemTable where key='antigravityUnifiedStateSync.trajectorySummaries';"
-        ]) ?? ""
-        let fingerprint = value.hashValue
-        if let old = antigravityFingerprint, old != fingerprint {
-            antigravityLastChange = Date()
+        let isLive = database.url.pathExtension == "db" && database.url.path.contains(".gemini/antigravity/conversations")
+
+        let fingerprint: Int
+        let latestStatus: Int?
+        let latestFinished: TimeInterval?
+
+        if isLive {
+            let stepInfo = run("/usr/bin/sqlite3", [
+                "-noheader", database.url.path,
+                "SELECT max(idx), (SELECT status FROM steps WHERE idx = (SELECT max(idx) FROM steps)) FROM steps;"
+            ]) ?? ""
+            let components = stepInfo.trimmingCharacters(in: .whitespacesAndNewlines).split(separator: "|")
+            let maxIdx = components.first.flatMap { Int($0) } ?? 0
+            let status = components.count > 1 ? Int(components[1]) : nil
+            latestStatus = status
+            latestFinished = nil
+            fingerprint = "\(database.url.path):\(maxIdx):\(status ?? -1)".hashValue
+        } else {
+            let value = run("/usr/bin/sqlite3", [
+                "-noheader", database.url.path,
+                "select value from ItemTable where key='antigravityUnifiedStateSync.trajectorySummaries';"
+            ]) ?? ""
+            latestStatus = nil
+            latestFinished = run("/usr/bin/sqlite3", [
+                "-noheader", database.url.path,
+                "select max(cast(substr(key, length(key) - 12) as integer)) / 1000.0 from ItemTable where key like 'antigravity.notification.agent-finished-%';"
+            ]).flatMap { TimeInterval($0.trimmingCharacters(in: .whitespacesAndNewlines)) }
+            fingerprint = value.hashValue
+        }
+
+        let dbMtime = database.modified
+        let dbMtimeAge = Date().timeIntervalSince(dbMtime)
+
+        if let old = antigravityFingerprint {
+            if old != fingerprint {
+                antigravityLastChange = Date()
+            }
+        } else {
+            if dbMtimeAge <= 30 {
+                antigravityLastChange = dbMtime
+            }
         }
         antigravityFingerprint = fingerprint
 
         let changeAge = antigravityLastChange.map { Date().timeIntervalSince($0) }
-        let latestFinished = run("/usr/bin/sqlite3", [
-            "-noheader", database.0.path,
-            "select max(cast(substr(key, length(key) - 12) as integer)) / 1000.0 from ItemTable where key like 'antigravity.notification.agent-finished-%';"
-        ]).flatMap { TimeInterval($0.trimmingCharacters(in: .whitespacesAndNewlines)) }
         let finishedRecently = latestFinished.map { Date().timeIntervalSince1970 - $0 < 3 } ?? false
+
         let phase: AgentPhase
-        if !processRunning || finishedRecently || changeAge == nil || changeAge! > 30 {
+        if !processRunning || finishedRecently {
             phase = .stopped
-        } else if changeAge! <= 2 {
-            phase = .preparing
+        } else if isLive, let status = latestStatus, status == 2 {
+            if changeAge != nil && changeAge! <= 2 {
+                phase = .preparing
+            } else {
+                phase = .running
+            }
         } else {
-            phase = .running
+            if changeAge == nil || changeAge! > 30 || dbMtimeAge > 30 {
+                phase = .stopped
+            } else if changeAge! <= 2 {
+                phase = .preparing
+            } else {
+                phase = .running
+            }
         }
 
         return AgentRecord(
@@ -256,7 +312,7 @@ private actor LocalAgentReader {
             provider: .antigravity,
             tokens: nil,
             name: "Antigravity",
-            activityTimestamp: (antigravityLastChange ?? database.1).timeIntervalSince1970
+            activityTimestamp: (antigravityLastChange ?? dbMtime).timeIntervalSince1970
         )
     }
 
