@@ -50,9 +50,62 @@ private actor LocalAgentReader {
 
     func read() -> [AgentRecord] {
         var records = (try? readCodex()) ?? []
-        if let claude = readClaude() { records.append(claude) }
-        if let antigravity = readAntigravity() { records.append(antigravity) }
+        if let claude = readClaude() {
+            records.append(claude)
+        } else if isClaudeInstalled() {
+            records.append(AgentRecord(
+                id: "claude-installed",
+                phase: .stopped,
+                provider: .claude,
+                tokens: nil,
+                name: "Claude Code",
+                activityTimestamp: 0
+            ))
+        }
+
+        if let antigravity = readAntigravity() {
+            records.append(antigravity)
+        } else if isAntigravityInstalled() {
+            records.append(AgentRecord(
+                id: "antigravity-installed",
+                phase: .stopped,
+                provider: .antigravity,
+                tokens: nil,
+                name: "Antigravity",
+                activityTimestamp: 0
+            ))
+        }
+
+        if records.filter({ $0.provider == .codex }).isEmpty && isCodexInstalled() {
+            records.append(AgentRecord(
+                id: "codex-installed",
+                phase: .stopped,
+                provider: .codex,
+                tokens: nil,
+                name: "Codex",
+                activityTimestamp: 0
+            ))
+        }
+
         return records
+    }
+
+    private func isCodexInstalled() -> Bool {
+        let home = FileManager.default.homeDirectoryForCurrentUser.path
+        return FileManager.default.fileExists(atPath: "\(home)/.codex")
+    }
+
+    private func isClaudeInstalled() -> Bool {
+        let home = FileManager.default.homeDirectoryForCurrentUser.path
+        return FileManager.default.fileExists(atPath: "\(home)/.claude") || commandSucceeds("/usr/bin/which", ["claude"])
+    }
+
+    private func isAntigravityInstalled() -> Bool {
+        let home = FileManager.default.homeDirectoryForCurrentUser.path
+        return FileManager.default.fileExists(atPath: "\(home)/.gemini/antigravity")
+            || FileManager.default.fileExists(atPath: "\(home)/Library/Application Support/Antigravity")
+            || FileManager.default.fileExists(atPath: "\(home)/Library/Application Support/Antigravity IDE")
+            || commandSucceeds("/usr/bin/pgrep", ["-f", "Antigravity( IDE)?\\.app"])
     }
 
     private func readCodex() throws -> [AgentRecord] {

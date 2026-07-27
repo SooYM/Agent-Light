@@ -110,9 +110,43 @@ final class TokenSignalApp: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     func menuNeedsUpdate(_ menu: NSMenu) {
-        statusLabelItem.title = "Status: \(store.snapshot.phase.label)"
+        menu.removeAllItems()
+
+        let statusTitle = "Status: \(store.snapshot.phase.label)"
+        let statusItem = NSMenuItem(title: statusTitle, action: nil, keyEquivalent: "")
+        statusItem.isEnabled = false
+        menu.addItem(statusItem)
+        menu.addItem(.separator())
+
+        let agentsHeader = NSMenuItem(title: "Detected Agents:", action: nil, keyEquivalent: "")
+        agentsHeader.isEnabled = false
+        menu.addItem(agentsHeader)
+
+        let allAgents = store.snapshot.allAgents
+        if allAgents.isEmpty {
+            let emptyItem = NSMenuItem(title: "  No local agents found", action: nil, keyEquivalent: "")
+            emptyItem.isEnabled = false
+            menu.addItem(emptyItem)
+        } else {
+            for agent in allAgents {
+                let tokenText = agent.tokens.map { " (\($0.formatted(.number.grouping(.automatic))) tokens)" } ?? ""
+                let title = "  \(agent.phase.symbol) \(agent.name): \(agent.phase.label)\(tokenText)"
+                let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
+                item.isEnabled = false
+                menu.addItem(item)
+            }
+        }
+
+        menu.addItem(.separator())
+
         toggleItem.title = panel.isVisible ? "Hide Token Signal" : "Show Token Signal"
+        menu.addItem(toggleItem)
+
         lightOnlyItem.state = store.lightOnly ? .on : .off
+        menu.addItem(lightOnlyItem)
+
+        menu.addItem(.separator())
+        menu.addItem(withTitle: "Quit Token Signal", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
     }
 
     @objc private func togglePanel() {

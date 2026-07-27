@@ -67,12 +67,16 @@ struct MonitorView: View {
                     .font(.system(size: 11, weight: .semibold, design: .rounded))
                     .tracking(1.3)
                     .foregroundStyle(activeColor)
+                Spacer()
+                Text(agentCountText)
+                    .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                    .foregroundStyle(Color.white.opacity(0.40))
             }
 
-            Spacer(minLength: 13)
+            Spacer(minLength: 8)
 
             Text(formattedTokens)
-                .font(.system(size: 42, weight: .medium, design: .monospaced))
+                .font(.system(size: 34, weight: .medium, design: .monospaced))
                 .tracking(-1.4)
                 .foregroundStyle(Color.white)
                 .lineLimit(1)
@@ -83,23 +87,39 @@ struct MonitorView: View {
                 .animation(.easeOut(duration: 0.22), value: store.snapshot.tokens)
 
             Text(store.snapshot.tokenCoveragePartial ? "TOKENS / REPORTED" : "TOKENS")
-                .font(.system(size: 10, weight: .medium, design: .monospaced))
+                .font(.system(size: 9, weight: .medium, design: .monospaced))
                 .tracking(1.6)
                 .foregroundStyle(Color.white.opacity(0.45))
-                .padding(.top, 3)
+                .padding(.top, 2)
 
-            Spacer(minLength: 14)
+            Spacer(minLength: 8)
 
-            HStack {
-                Text(store.errorMessage ?? providerText)
-                    .lineLimit(1)
-                Spacer(minLength: 8)
-                Text(agentCountText)
+            VStack(alignment: .leading, spacing: 4) {
+                ForEach(store.snapshot.allAgents, id: \.id) { agent in
+                    HStack(spacing: 6) {
+                        Circle()
+                            .fill(color(for: agent.phase))
+                            .frame(width: 6, height: 6)
+                        Text(agent.name)
+                            .font(.system(size: 11, weight: .medium, design: .rounded))
+                            .foregroundStyle(Color.white.opacity(0.85))
+                        Spacer(minLength: 4)
+                        Text(agent.phase.rawValue.uppercased())
+                            .font(.system(size: 9, weight: .semibold, design: .monospaced))
+                            .foregroundStyle(color(for: agent.phase).opacity(0.85))
+                    }
+                }
             }
-            .font(.system(size: 11, weight: .medium, design: .rounded))
-            .foregroundStyle(Color.white.opacity(0.58))
         }
-        .padding(.vertical, 20)
+        .padding(.vertical, 14)
+    }
+
+    private func color(for phase: AgentPhase) -> Color {
+        switch phase {
+        case .stopped: .signalRed
+        case .preparing: .signalOrange
+        case .running: .signalGreen
+        }
     }
 
     private var statusText: String {

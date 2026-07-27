@@ -43,8 +43,29 @@ public struct MonitorSnapshot: Equatable, Sendable {
     public let activeAgents: Int
     public let detail: String
     public let providers: [AgentProvider]
+    public let allAgents: [AgentRecord]
     public let tokenCoveragePartial: Bool
     public let lastActivity: TimeInterval?
+
+    public init(
+        phase: AgentPhase,
+        tokens: Int?,
+        activeAgents: Int,
+        detail: String,
+        providers: [AgentProvider],
+        allAgents: [AgentRecord] = [],
+        tokenCoveragePartial: Bool,
+        lastActivity: TimeInterval?
+    ) {
+        self.phase = phase
+        self.tokens = tokens
+        self.activeAgents = activeAgents
+        self.detail = detail
+        self.providers = providers
+        self.allAgents = allAgents
+        self.tokenCoveragePartial = tokenCoveragePartial
+        self.lastActivity = lastActivity
+    }
 
     public static let empty = MonitorSnapshot(
         phase: .stopped,
@@ -52,9 +73,20 @@ public struct MonitorSnapshot: Equatable, Sendable {
         activeAgents: 0,
         detail: "No recent task",
         providers: [],
+        allAgents: [],
         tokenCoveragePartial: false,
         lastActivity: nil
     )
+}
+
+public extension AgentPhase {
+    var symbol: String {
+        switch self {
+        case .stopped: "🔴"
+        case .preparing: "🟠"
+        case .running: "🟢"
+        }
+    }
 }
 
 public enum SnapshotResolver {
@@ -70,8 +102,9 @@ public enum SnapshotResolver {
         let relevant = active.isEmpty ? [latest] : active
         let knownTokens = relevant.compactMap(\.tokens)
         let providers = Array(Set(relevant.map(\.provider))).sorted { $0.rawValue < $1.rawValue }
-        let detail: String
+        let allAgents = deduplicateAgents(records)
 
+        let detail: String
         if active.count > 1 {
             detail = "\(active.count) agents active"
         } else if let agent = active.first {
@@ -86,9 +119,27 @@ public enum SnapshotResolver {
             activeAgents: active.count,
             detail: detail,
             providers: providers,
+            allAgents: allAgents,
             tokenCoveragePartial: knownTokens.count != relevant.count,
             lastActivity: latest.activityTimestamp
         )
+    }
+
+    private static func deduplicateAgents(_ records: [AgentRecord]) -> [AgentRecord] {
+        var map: [AgentProvider: AgentRecord] = [:]
+        for record in records {
+            if let existing = map[record.provider] {
+                let recordIsActive = record.phase != .stopped
+                let existingIsActive = existing.phase != .stopped
+                if (recordIsActive && !existingIsActive) ||
+                   (recordIsActive == existingIsActive && record.activityTimestamp > existing.activityTimestamp) {
+                    map[record.provider] = record
+                }
+            } else {
+                map[record.provider] = record
+            }
+        }
+        return AgentProvider.allCases.compactMap { map[$0] }
     }
 
     public static func parseTSV(_ text: String) -> [AgentRecord] {
