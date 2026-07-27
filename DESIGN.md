@@ -41,6 +41,14 @@ tooltip and accessibility label repeat the status in text. Light Only Mode is
 available from the same menu and persists between launches. The app remains
 visible in the Dock, where selecting its icon reopens a hidden panel.
 
+## Distribution Experience
+
+The DMG opens as a `720 × 480 pt` road surface with two clearly marked icon
+zones. Token Signal sits on the left, Applications on the right, and a central
+lane arrow communicates the drag direction without instructional text. Dark
+asphalt, white road paint, and small red, orange, and green signal accents
+extend the in-app instrument world into installation.
+
 ## Accessibility
 
 Combined panel label announces phase and tokens in the full layout, and phase

@@ -37,16 +37,17 @@ Running takes priority over preparing when several agents are active.
    cd Agent-Light
    ```
 
-2. Unzip the bundled build:
+2. Open the drag-to-install disk image:
 
    ```sh
-   ditto -x -k "outputs/Token Signal.zip" outputs
+   open "outputs/Token-Signal.dmg"
    ```
 
-3. Launch it:
+3. Drag **Token Signal** onto **Applications** in the road-themed installer,
+   then launch it:
 
    ```sh
-   open "outputs/Token Signal.app"
+   open "/Applications/Token Signal.app"
    ```
 
 Token Signal opens as a floating panel and adds a color-coded indicator to the
@@ -83,6 +84,16 @@ The build script creates an ad-hoc signed app at
 `outputs/Token Signal.app`; it does not regenerate the ZIP. No Apple Developer
 account is required for local use. The app is not Developer ID signed or
 notarized, so Gatekeeper may show a first-launch warning.
+
+Build the drag-to-Applications DMG with its traffic-road Finder background:
+
+```sh
+zsh scripts/build-dmg.sh
+open "outputs/Token-Signal.dmg"
+```
+
+The DMG script uses built-in macOS tools only: `hdiutil`, Finder, and
+AppleScript.
 
 ## Test
 
@@ -136,7 +147,10 @@ Tests/                     Swift Testing checks
 Resources/Info.plist       app bundle metadata
 Resources/AppIcon.svg      editable traffic-light app icon source
 Resources/TokenSignal.icns packaged macOS app icon
+Resources/DMGBackground.png traffic-road DMG background
 scripts/build-app.sh       release packaging script
+scripts/build-dmg.sh       drag-to-Applications DMG packaging
+outputs/Token-Signal.dmg   ready-to-install disk image
 outputs/Token Signal.zip   ready-to-run local build
 ```
 
